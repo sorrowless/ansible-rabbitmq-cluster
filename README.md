@@ -1,4 +1,4 @@
-## AndrewGodGivens /ansible_ansible_nginx_exporter
+## AndrewGodGivens /RabbitMQ_HA_cluster
 ============
 
 An Ansible role which installs and configures RabbitMQ HA cluster on Linux
