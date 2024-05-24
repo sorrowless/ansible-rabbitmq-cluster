@@ -1,0 +1,39 @@
+---
+- name: Ensure cookie dir
+  become: yes
+  become_user: root
+  file:
+    path: "{{ cookie_dir }}"
+    state: directory
+    mode: 0755
+    owner: root
+    group: root
+
+- name: Ensure config dir
+  become: yes
+  become_user: root
+  file:
+    path: "{{ rabbitmq_config_dir }}"
+    state: directory
+    mode: 0755
+    owner: root
+    group: root
+
+- name: Ensure config erlang cookie
+  template:
+    src: "cookie.j2"
+    dest: "{{ cookie_dir }}/.erlang.cookie"
+    mode: "600"
+    owner: root
+  notify:
+    # - Restart Docker container
+
+- name: Ensure entrypoint
+  ansible.builtin.copy:
+    src: ./files/cluster-entrypoint.sh
+    dest: "{{ rabbitmq_config_dir }}/cluster-entrypoint.sh"
+    mode: "770"
+    owner: root
+
+- name: Include docker-related rabbitmq tasks
+  include_tasks: run_rabbitmq_in_docker.yml
