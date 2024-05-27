@@ -37,3 +37,15 @@
 
 - name: Include docker-related rabbitmq tasks
   include_tasks: run_rabbitmq_in_docker.yml
+
+- name: Run command for create vhost
+  community.docker.docker_container_exec:
+    container: "{{ rabbitmq_container_name }}"
+    command: "rabbitmqctl add_vhost {{ item }}"
+  with_items: "{{ rabbitmq_vhost_list }}"
+
+- name: Run command for create policy
+  community.docker.docker_container_exec:
+    container: "{{ rabbitmq_container_name }}"
+    command: rabbitmqctl set_policy HA -p "{{ item }}" ".*" '{"ha-mode":"all","ha-sync-mode":"automatic"}'
+  with_items: "{{ rabbitmq_vhost_list }}"

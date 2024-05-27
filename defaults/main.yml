@@ -23,6 +23,7 @@ rabbitmq_pass: guest
 rabbitmq_starting_host: ""
 cookie_dir: "{{ rabbitmq_config_dir }}"
 cookie_secret: 12345
+rabbitmq_vhost_list: []
 rabbitmq_docker_labels:
   - rabbitmq
 rabbitmq_resolve_peers: []
