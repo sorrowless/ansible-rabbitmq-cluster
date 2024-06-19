@@ -23,10 +23,10 @@
   template:
     src: "cookie.j2"
     dest: "{{ cookie_dir }}/.erlang.cookie"
-    mode: "600"
-    owner: root
-  # notify:
-  #   # - Restart Docker container
+    mode: "400"
+    owner: 999
+    group: root
+  register: result_ensure_erlang_cookie
 
 - name: Ensure entrypoint
   ansible.builtin.copy:
@@ -34,9 +34,29 @@
     dest: "{{ rabbitmq_config_dir }}/cluster-entrypoint.sh"
     mode: "770"
     owner: root
+  register: result_ensure_entrypoint
 
 - name: Include docker-related rabbitmq tasks
   include_tasks: run_rabbitmq_in_docker.yml
+
+- name: Waiting for start rabbitmq
+  ansible.builtin.wait_for:
+    port: "{{ rabbitmq_ampq_port }}"
+    host: "{{ rabbitmq_listen_address }}"
+    delay: 5
+  when: result_container_start is changed
+
+- name: Pause for 5 seconds for starting app
+  ansible.builtin.pause:
+    seconds: 25
+  when: result_container_start is changed
+
+- name: Waiting for start rabbitmq
+  ansible.builtin.wait_for:
+    port: "{{ rabbitmq_ampq_port }}"
+    host: "{{ rabbitmq_listen_address }}"
+    delay: 5
+  when: result_container_start is changed
 
 - name: Run command for create vhost
   community.docker.docker_container_exec:
@@ -49,3 +69,26 @@
     container: "{{ rabbitmq_container_name }}"
     command: rabbitmqctl set_policy HA -p "{{ item }}" ".*" '{"ha-mode":"all","ha-sync-mode":"automatic"}'
   with_items: "{{ rabbitmq_vhost_list }}"
+
+- name: Ensure rabbitmq users
+  community.rabbitmq.rabbitmq_user:
+    login_host: "{{ rabbitmq_login_host }}"
+    login_port: "{{ rabbitmq_login_port }}"
+    login_password: "{{ rabbitmq_login_password }}"
+    login_user: "{{ rabbitmq_login_user }}"
+    user: "{{ item.user }}"
+    password: "{{ item.password }}"
+    # vhost: "{{ item.vhost }}"
+    # configure_priv: "{{ item.configure_priv }}"
+    # read_priv: "{{ item.read_priv }}"
+    # write_priv: "{{ item.write_priv }}"
+    permissions:  "{{ item.permissions }}"
+    state: present
+  with_items: "{{ walg_rabbitmq_users_list }}"
+
+- name: Restart Docker container
+  docker_container:
+    name: "{{ rabbitmq_container_name }}"
+    image: "{{ rabbitmq_image }}"
+    state: started
+  when: (result_ensure_erlang_cookie is changed or result_ensure_entrypoint is changed) and result_container_start is not changed

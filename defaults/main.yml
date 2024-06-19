@@ -12,6 +12,7 @@ rabbitmq_peer_name_3: rabbitmq3
 rabbitmq_peer_ip_1: 192.168.1.1
 rabbitmq_peer_ip_2: 192.168.1.2
 rabbitmq_peer_ip_3: 192.168.1.3
+rabbitmq_vhost_list: []
 rabbitmq_container_name: "{{ rabbitmq_hostname }}"
 rabbitmq_config_dir: /etc/rabbitmq/
 rabbitmq_image: rabbitmq
@@ -23,12 +24,34 @@ rabbitmq_pass: guest
 rabbitmq_starting_host: ""
 cookie_dir: "{{ rabbitmq_config_dir }}"
 cookie_secret: 12345
-rabbitmq_vhost_list: []
 rabbitmq_docker_labels:
   - rabbitmq
 rabbitmq_resolve_peers: []
 rabbitmq_expose_ports:
-    - "{{ rabbitmq_ampq_port }}:5672"
-    - "{{ rabbitmq_managment_port }}:15672"
-    - "{{ rabbitmq_epmd_port }}:4369"
-    - "{{ rabbitmq_connect_port }}:25672"
+    - "{{ rabbitmq_listen_address }}:{{ rabbitmq_ampq_port }}:5672"
+    - "{{ rabbitmq_listen_address }}:{{ rabbitmq_managment_port }}:15672"
+    - "{{ rabbitmq_listen_address }}:{{ rabbitmq_epmd_port }}:4369"
+    - "{{ rabbitmq_listen_address }}:{{ rabbitmq_connect_port }}:25672"
+rabbbitmq_export_vars:
+  RABBITMQ_DEFAULT_USER: "{{ rabbitmq_user }}"
+  RABBITMQ_DEFAULT_PASS: "{{ rabbitmq_pass }}"
+  RABBITMQ_SERVER_ADDITIONAL_ERL_ARGS: "-rabbit consumer_timeout 31622400000"
+  JOIN_CLUSTER_HOST: "{{ rabbitmq_starting_host }}"
+
+rabbitmq_login_host: 192.168.1.1
+rabbitmq_login_port: 15672
+rabbitmq_login_user: admin
+rabbitmq_login_password: password
+
+walg_rabbitmq_users_list: []
+  # -  user: new_user
+  #    password: new_user
+  #    vhost: /
+  #    configure_priv: .*
+  #    read_priv: .*
+  #    write_priv: .*
+  #    permissions:
+  #      - vhost: /
+  #        configure_priv: .*
+  #        read_priv: .*
+  #        write_priv: .*

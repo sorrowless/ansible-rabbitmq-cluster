@@ -4,6 +4,8 @@
     state: present
     project_name: rabbitmq_cluster
     definition:
+      volumes:
+        rabbitmq:
       version: '2'
       services:
         rabbitmq:
@@ -11,15 +13,13 @@
           image: "{{ rabbitmq_image }}:{{ rabbitmq_image_version }}"
           container_name: "{{ rabbitmq_container_name }}"
           ports: "{{ rabbitmq_expose_ports }}"
-          environment:
-            RABBITMQ_DEFAULT_USER: "{{ rabbitmq_user }}"
-            RABBITMQ_DEFAULT_PASS: "{{ rabbitmq_pass }}"
-            RABBITMQ_SERVER_ADDITIONAL_ERL_ARGS: "-rabbit consumer_timeout 31622400000"
-            JOIN_CLUSTER_HOST: "{{ rabbitmq_starting_host }}"
+          environment: "{{ rabbbitmq_export_vars }}"
           restart: always
           labels: "{{ rabbitmq_docker_labels }}"
           volumes:
             - "{{ rabbitmq_config_dir }}/.erlang.cookie:/var/lib/rabbitmq/.erlang.cookie"
             - "{{ rabbitmq_config_dir }}/cluster-entrypoint.sh:/usr/local/bin/cluster-entrypoint.sh"
+            - rabbitmq:/var/lib/rabbitmq
           extra_hosts: "{{ rabbitmq_resolve_peers }}"
           entrypoint: /usr/local/bin/cluster-entrypoint.sh
+  register: result_container_start
