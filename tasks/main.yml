@@ -49,14 +49,7 @@
 - name: Pause for 5 seconds for starting app
   ansible.builtin.pause:
     seconds: 25
-  when: result_container_start is changed
-
-- name: Waiting for start rabbitmq
-  ansible.builtin.wait_for:
-    port: "{{ rabbitmq_ampq_port }}"
-    host: "{{ rabbitmq_listen_address }}"
-    delay: 5
-  when: result_container_start is changed
+  when: result_container_start is changed and (walg_rabbitmq_users_list is defined or rabbitmq_vhost_list is defined)
 
 - name: Run command for create vhost
   community.docker.docker_container_exec:
