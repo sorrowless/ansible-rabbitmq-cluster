@@ -1,8 +1,8 @@
 ---
 galaxy_info:
-  description: Ansible role to deploy Prometheus nginx exporter
+  description: Ansible role to deploy RabbitMQ HA cluster
   company: Personal project
-  role_name: ansible_RabbitMQ_HA_cluster
+  role_name: rabbitmq_cluster
 
 
   license: Apache
