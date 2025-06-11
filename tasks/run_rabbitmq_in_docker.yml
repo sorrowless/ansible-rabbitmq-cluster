@@ -23,3 +23,24 @@
           extra_hosts: "{{ rabbitmq_resolve_peers }}"
           entrypoint: /usr/local/bin/cluster-entrypoint.sh
   register: result_container_start
+
+- name: Deploy docker rabbitmq container in swarm
+  community.docker.docker_stack:
+    state: present
+    name: "{{ rabbitmq_stack_name }}"
+    with_registry_auth: true
+    compose:
+      - services:
+          rabbitmq:
+            hostname: "{{ rabbitmq_hostname }}"
+            image: "{{ rabbitmq_image }}:{{ rabbitmq_image_version }}"
+            ports: "{{ rabbitmq_expose_ports }}"
+            environment: "{{ rabbbitmq_export_vars }}"
+            labels: "{{ rabbitmq_docker_labels }}"
+            volumes:
+              - "{{ rabbitmq_config_dir }}/.erlang.cookie:/var/lib/rabbitmq/.erlang.cookie"
+              - "{{ rabbitmq_config_dir }}/cluster-entrypoint.sh:/usr/local/bin/cluster-entrypoint.sh"
+            deploy: "{{ rabbitmq_swarm_deploy }}"
+            entrypoint: /usr/local/bin/cluster-entrypoint.sh
+  when: rabbitmq_swarm
+  register: result_container_start
