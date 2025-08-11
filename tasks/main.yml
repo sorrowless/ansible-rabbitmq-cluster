@@ -19,10 +19,20 @@
     owner: root
     group: root
 
+- name: Ensure data dir
+  become: yes
+  become_user: root
+  file:
+    path: "{{ rabbitmq_config_dir }}/data"
+    state: directory
+    mode: 0755
+    owner: 999
+    group: 999
+
 - name: Ensure config erlang cookie
   template:
     src: "cookie.j2"
-    dest: "{{ cookie_dir }}/.erlang.cookie"
+    dest: "{{ rabbitmq_config_dir }}/data/.erlang.cookie"
     mode: "400"
     owner: 999
     group: root
@@ -33,7 +43,7 @@
     src: ./files/cluster-entrypoint.sh
     dest: "{{ rabbitmq_config_dir }}/cluster-entrypoint.sh"
     mode: "770"
-    owner: root
+    owner: 999
   register: result_ensure_entrypoint
 
 - name: Include docker-related rabbitmq tasks
@@ -71,10 +81,10 @@
     login_user: "{{ rabbitmq_login_user }}"
     user: "{{ item.user }}"
     password: "{{ item.password }}"
-    # vhost: "{{ item.vhost }}"
-    # configure_priv: "{{ item.configure_priv }}"
-    # read_priv: "{{ item.read_priv }}"
-    # write_priv: "{{ item.write_priv }}"
+    vhost: "{{ item.vhost }}"
+    configure_priv: "{{ item.configure_priv }}"
+    read_priv: "{{ item.read_priv }}"
+    write_priv: "{{ item.write_priv }}"
     permissions:  "{{ item.permissions }}"
     state: present
   with_items: "{{ walg_rabbitmq_users_list }}"
