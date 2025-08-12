@@ -42,7 +42,6 @@
               - "{{ rabbitmq_config_dir }}/cluster-entrypoint.sh:/usr/local/bin/cluster-entrypoint.sh"
               - "{{ rabbitmq_config_dir }}/data:/var/lib/rabbitmq"
             deploy: "{{ rabbitmq_swarm_deploy }}"
-            # extra_hosts: "{{ rabbitmq_resolve_peers }}"
             entrypoint: /usr/local/bin/cluster-entrypoint.sh
   when: rabbitmq_swarm
   register: result_container_start
