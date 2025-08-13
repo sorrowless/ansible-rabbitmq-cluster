@@ -19,12 +19,22 @@
     owner: root
     group: root
 
+- name: Ensure data dir
+  become: yes
+  become_user: root
+  file:
+    path: "{{ rabbitmq_config_dir }}/data"
+    state: directory
+    mode: 0755
+    owner: "{{ rabbitmq_uid }}"
+    group: "{{ rabbitmq_gid }}"
+
 - name: Ensure config erlang cookie
   template:
     src: "cookie.j2"
-    dest: "{{ cookie_dir }}/.erlang.cookie"
+    dest: "{{ rabbitmq_config_dir }}/data/.erlang.cookie"
     mode: "400"
-    owner: 999
+    owner: "{{ rabbitmq_uid }}"
     group: root
   register: result_ensure_erlang_cookie
 
@@ -33,11 +43,35 @@
     src: ./files/cluster-entrypoint.sh
     dest: "{{ rabbitmq_config_dir }}/cluster-entrypoint.sh"
     mode: "770"
-    owner: root
+    owner: "{{ rabbitmq_uid }}"
   register: result_ensure_entrypoint
 
 - name: Include docker-related rabbitmq tasks
   include_tasks: run_rabbitmq_in_docker.yml
+
+- name: Get rmq container realname in swarm
+  command: 
+    argv:
+      - /usr/bin/docker
+      - ps
+      - -a
+      - -f
+      - name={{ rabbitmq_stack_name }}_{{ rabbitmq_container_name }}
+      - -f
+      - status=running
+      - --format
+      - !unsafe "{{ .Names }}"
+  register: real_container_name
+  when: rabbitmq_swarm
+
+- fail:
+    msg: Real container name not found
+  when: rabbitmq_swarm and ( real_container_name.stdout_lines | length == 0 )
+
+- name: Set rmq container realname in swarm
+  ansible.builtin.set_fact:
+    rabbitmq_container_name: "{{ real_container_name.stdout_lines[0] }}"
+  when: rabbitmq_swarm
 
 - name: Waiting for start rabbitmq
   ansible.builtin.wait_for:
@@ -71,13 +105,9 @@
     login_user: "{{ rabbitmq_login_user }}"
     user: "{{ item.user }}"
     password: "{{ item.password }}"
-    # vhost: "{{ item.vhost }}"
-    # configure_priv: "{{ item.configure_priv }}"
-    # read_priv: "{{ item.read_priv }}"
-    # write_priv: "{{ item.write_priv }}"
     permissions:  "{{ item.permissions }}"
     state: present
-  with_items: "{{ walg_rabbitmq_users_list }}"
+  with_items: "{{ rabbitmq_users_list }}"
 
 - name: Restart Docker container
   docker_container:

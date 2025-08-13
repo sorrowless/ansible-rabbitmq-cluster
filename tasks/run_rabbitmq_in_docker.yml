@@ -1,6 +1,6 @@
 ---
 - name: Start rabbitmq in docker
-  community.docker.docker_compose:
+  community.docker.docker_stack:
     state: present
     project_name: rabbitmq_cluster
     definition:
@@ -22,4 +22,26 @@
             - rabbitmq:/var/lib/rabbitmq
           extra_hosts: "{{ rabbitmq_resolve_peers }}"
           entrypoint: /usr/local/bin/cluster-entrypoint.sh
+  when: not rabbitmq_swarm
+  register: result_container_start
+
+- name: Deploy docker rabbitmq container in swarm
+  community.docker.docker_stack:
+    state: present
+    name: "{{ rabbitmq_stack_name }}"
+    with_registry_auth: true
+    compose:
+      - services:
+          rabbitmq:
+            hostname: "{{ rabbitmq_hostname }}"
+            image: "{{ rabbitmq_image }}:{{ rabbitmq_image_version }}"
+            ports: "{{ rabbitmq_expose_ports }}"
+            environment: "{{ rabbbitmq_export_vars }}"
+            labels: "{{ rabbitmq_docker_labels }}"
+            volumes:
+              - "{{ rabbitmq_config_dir }}/cluster-entrypoint.sh:/usr/local/bin/cluster-entrypoint.sh"
+              - "{{ rabbitmq_config_dir }}/data:/var/lib/rabbitmq"
+            deploy: "{{ rabbitmq_swarm_deploy }}"
+            entrypoint: /usr/local/bin/cluster-entrypoint.sh
+  when: rabbitmq_swarm
   register: result_container_start
