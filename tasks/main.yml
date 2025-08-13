@@ -26,15 +26,15 @@
     path: "{{ rabbitmq_config_dir }}/data"
     state: directory
     mode: 0755
-    owner: 999
-    group: 999
+    owner: "{{ rabbitmq_uid }}"
+    group: "{{ rabbitmq_gid }}"
 
 - name: Ensure config erlang cookie
   template:
     src: "cookie.j2"
     dest: "{{ rabbitmq_config_dir }}/data/.erlang.cookie"
     mode: "400"
-    owner: 999
+    owner: "{{ rabbitmq_uid }}"
     group: root
   register: result_ensure_erlang_cookie
 
@@ -43,7 +43,7 @@
     src: ./files/cluster-entrypoint.sh
     dest: "{{ rabbitmq_config_dir }}/cluster-entrypoint.sh"
     mode: "770"
-    owner: 999
+    owner: "{{ rabbitmq_uid }}"
   register: result_ensure_entrypoint
 
 - name: Include docker-related rabbitmq tasks
